@@ -121,3 +121,24 @@ def format_duration(duration):
     minutes = (total_seconds % 3600) // 60
     seconds = total_seconds % 60
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+# Initialize the manager
+manager = RelayRaceManager()
+
+# Connect to Google Sheets
+sheets_service = manager.connect_to_sheets('path/to/credentials.json')
+
+# Process registration data
+registration_df = pd.read_csv('registration_data.csv')
+teams_df = manager.process_registration_data(registration_df)
+
+# Process each day's results
+for day in range(1, 4):
+    day_times_df = pd.read_csv(f'day_{day}_times.csv')
+    results_df = manager.process_day_results(day_times_df, teams_df)
+    
+    # Update Google Sheet
+    manager.update_sheet(sheets_service, results_df, f'Day {day} Results')
+
+# Launch web display
+manager.create_web_display()
