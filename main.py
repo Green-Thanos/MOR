@@ -9,17 +9,15 @@ import streamlit as st
 class RelayRaceManager:
     def __init__(self):
         self.SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-        self.SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'
+        self.SPREADSHEET_ID = 'SPREADSHEET ID'
         
     def connect_to_sheets(self, credentials_path):
-        """Initialize Google Sheets connection"""
         creds = service_account.Credentials.from_service_account_file(
             credentials_path, scopes=self.SCOPES)
         service = build('sheets', 'v4', credentials=creds)
         return service.spreadsheets()
 
     def parse_time(self, time_str):
-        """Parse time string to datetime object"""
         try:
             return datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
         except ValueError:
@@ -29,7 +27,6 @@ class RelayRaceManager:
                 return None
 
     def calculate_leg_duration(self, start_time, end_time):
-        """Calculate duration between two times, handling overnight transitions"""
         if isinstance(start_time, str):
             start_time = self.parse_time(start_time)
         if isinstance(end_time, str):
@@ -44,7 +41,6 @@ class RelayRaceManager:
         return timedelta(0)
 
     def process_registration_data(self, registration_df):
-        """Process team registration data"""
         return pd.DataFrame({
             'team_name': registration_df['team_name'],
             'division': registration_df['division'],
@@ -52,7 +48,6 @@ class RelayRaceManager:
         })
 
     def process_day_results(self, times_df, teams_df):
-        """Process results for a single day"""
         results = []
         for _, team in teams_df.iterrows():
             team_times = times_df[times_df['team_name'] == team['team_name']]
@@ -76,7 +71,6 @@ class RelayRaceManager:
         return pd.DataFrame(results)
 
     def update_sheet(self, sheets_service, data, range_name):
-        """Update Google Sheet with processed results"""
         try:
             body = {
                 'values': data.values.tolist()
@@ -93,7 +87,6 @@ class RelayRaceManager:
             return None
 
     def create_web_display(self):
-        """Create Streamlit web display"""
         st.title("Relay Race Results")
         
         # Add tabs for different views

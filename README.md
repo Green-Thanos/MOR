@@ -12,4 +12,6 @@ Handicap Time Pace
 Penalties
 
 
-Figure out how concurrent times work, and then put that into the finish. Or come up with own system
+# TODO
+
+main.py spreadsheet api depreciated
