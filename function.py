@@ -1,72 +1,145 @@
 import gspread
 from datetime import datetime, timedelta
 
-gc = gspread.service_account()
-spreadsheet = gc.open("Relay Data")
-
-# Access individual worksheets
-registration = spreadsheet.worksheet("sheet1")
-open_division = spreadsheet.worksheet("Open Division")
-mixed_division = spreadsheet.worksheet("Mixed Division")
-day1_legs = spreadsheet.worksheet("Day 1 Legs")
-day2_legs = spreadsheet.worksheet("Day 2 Legs")
-day3_legs = spreadsheet.worksheet("Day 3 Legs")
+def connect_to_sheets():
+    """Initialize connection to Google Sheets and get all worksheet references"""
+    gc = gspread.service_account()
+    spreadsheet = gc.open("Relay Data")
+    
+    return {
+        'main': spreadsheet.worksheet("Main"),
+        'registration': spreadsheet.worksheet("sheet1"),
+        'day1': spreadsheet.worksheet("Day 1 Legs"),
+        'day2': spreadsheet.worksheet("Day 2 Legs"),
+        'day3': spreadsheet.worksheet("Day 3 Legs")
+    }
 
 def calculate_leg_time(start_time, end_time):
-    start = datetime.strptime(start_time, "%H:%M:%S")
-    end = datetime.strptime(end_time, "%H:%M:%S")
-    
-    if end < start:
-        end += timedelta(days=1)
-    
-    duration = end - start
-    return duration.total_seconds() / 3600  # Return hours
+    """Calculate time difference between start and end times"""
+    try:
+        start = datetime.strptime(start_time, "%H:%M:%S")
+        end = datetime.strptime(end_time, "%H:%M:%S")
+        
+        if end < start:
+            end += timedelta(days=1)
+        
+        duration = end - start
+        return duration.total_seconds() / 3600  # Return hours
+    except ValueError:
+        return 0  # Return 0 for invalid time formats
 
 def calculate_handicap(team_data):
-    # Example algorithm for handicap calculation
-    avg_age = sum(team_data['ages']) / len(team_data['ages'])
-    gender_ratio = team_data['females'] / len(team_data['ages'])
+    """Calculate team handicap based on age and gender composition"""
+    ages = [int(age.strip()) for age in team_data['ages'].split(',') if age.strip().isdigit()]
+    females = sum(1 for gender in team_data['gender'].split(',') if gender.strip().lower() == 'f')
+    
+    if not ages:
+        return 1.0
+        
+    avg_age = sum(ages) / len(ages)
+    gender_ratio = females / len(ages) if ages else 0
     
     handicap = 1.0
     
-    if avg_age > 40:
+    # Adjust handicap based on age brackets
+    if avg_age > 50:
+        handicap *= 0.90
+    elif avg_age > 40:
         handicap *= 0.95
-    if gender_ratio > 0.5:
+    
+    # Adjust handicap based on gender composition
+    if gender_ratio >= 0.5:
         handicap *= 0.98
     
-    return handicap
+    return round(handicap, 3)
 
-def process_team_results(team_id, division):
-    team_data = registration.row_values(team_id + 1)  # Assuming team_id starts at 0
-    team_name = team_data[1]
+def calculate_day_totals(worksheet, start_row=6, end_row=18, time_col='A'):
+    """Calculate total time for a day's legs"""
+    total_times = {}
+    records = worksheet.get_all_records()
     
-    total_time = 0
-    for day in [day1_legs, day2_legs, day3_legs]:
-        day_legs = day.get_all_records()
-        team_legs = [leg for leg in day_legs if leg['Team ID'] == team_id]
+    for record in records:
+        team_id = record.get('Team ID')
+        if team_id:
+            leg_times = []
+            for row in range(start_row, end_row + 1):
+                cell_value = worksheet.acell(f'{time_col}{row}').value
+                if cell_value:
+                    try:
+                        time_parts = cell_value.split(':')
+                        hours = float(time_parts[0])
+                        minutes = float(time_parts[1]) / 60 if len(time_parts) > 1 else 0
+                        seconds = float(time_parts[2]) / 3600 if len(time_parts) > 2 else 0
+                        leg_times.append(hours + minutes + seconds)
+                    except (ValueError, IndexError):
+                        continue
+            
+            total_times[team_id] = sum(leg_times)
+    
+    return total_times
+
+def update_main_sheet(worksheets, team_data):
+    """Update main sheet with daily totals and overall results"""
+    main_sheet = worksheets['main']
+    
+    # Calculate daily totals
+    day1_totals = calculate_day_totals(worksheets['day1'], time_col='A')
+    day2_totals = calculate_day_totals(worksheets['day2'], time_col='B')
+    day3_totals = calculate_day_totals(worksheets['day3'], time_col='C')
+    
+    # Prepare headers
+    headers = ['Team ID', 'Team Name', 'Day 1 Total', 'Day 2 Total', 'Day 3 Total', 
+              'Overall Total', 'Handicap', 'Adjusted Total']
+    main_sheet.clear()
+    main_sheet.append_row(headers)
+    
+    # Update data for each team
+    for team in team_data:
+        team_id = team['Team ID']
+        team_name = team['Team Name']
         
-        day_start = datetime.strptime("06:00:00", "%H:%M:%S")
-        for leg in team_legs:
-            leg_time = calculate_leg_time(leg['Start Time'], leg['End Time'])
-            total_time += leg_time
-    
-    handicap = calculate_handicap({
-        'ages': [int(age) for age in team_data[2].split(',')],
-        'females': sum(1 for gender in team_data[3].split(',') if gender.lower() == 'f')
-    })
-    
-    adjusted_time = total_time * handicap
-    
-    if division == "Open":
-        worksheet = open_division
-    else:
-        worksheet = mixed_division
-    
-    worksheet.append_row([team_id, team_name, total_time, handicap, adjusted_time])
+        day1_time = day1_totals.get(team_id, 0)
+        day2_time = day2_totals.get(team_id, 0)
+        day3_time = day3_totals.get(team_id, 0)
+        
+        overall_total = day1_time + day2_time + day3_time
+        
+        handicap = calculate_handicap({
+            'ages': team.get('Ages', ''),
+            'gender': team.get('Gender', '')
+        })
+        
+        adjusted_total = overall_total * handicap
+        
+        row_data = [
+            team_id,
+            team_name,
+            round(day1_time, 3),
+            round(day2_time, 3),
+            round(day3_time, 3),
+            round(overall_total, 3),
+            handicap,
+            round(adjusted_total, 3)
+        ]
+        
+        main_sheet.append_row(row_data)
 
-# Process results for all teams
-all_teams = registration.get_all_records()
-for team in all_teams:
-    process_team_results(team['Team ID'], team['Division'])
+def main():
+    """Main function to process relay data"""
+    try:
+        # Connect to sheets
+        worksheets = connect_to_sheets()
+        
+        # Get team registration data
+        team_data = worksheets['registration'].get_all_records()
+        
+        # Update main sheet with calculations
+        update_main_sheet(worksheets, team_data)
+        
+        print("Relay data processed successfully!")
+        
+    except Exception as e:
+        print(f"Error processing relay data: {str(e)}")
 
-print("Results processed successfully.")
+if __name__ == "__main__":
+    main()
