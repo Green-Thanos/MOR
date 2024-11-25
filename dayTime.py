@@ -1,6 +1,10 @@
 import gspread
 from datetime import datetime, timedelta
 
+
+# Just calculates the day time from adding legs and the start point from 6am and adds it to column. Then moves time duration to main sheet and corresponding team (make sure to account for over 24 hours)
+
+
 def calculate_leg_duration(race_time_str, start_time=datetime(2024, 1, 1, 6, 0)):
     try:
         # Parse the race time with AM/PM
