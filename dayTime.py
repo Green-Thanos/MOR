@@ -1,38 +1,21 @@
 import gspread
 from datetime import datetime, timedelta
 
-
-# Just calculates the day time from adding legs and the start point from 6am and adds it to column. Then moves time duration to main sheet and corresponding team (make sure to account for over 24 hours)
-
+# Calculate Act time from the individual day worksheet
 
 def calculate_leg_duration(race_time_str, start_time=datetime(2024, 1, 1, 6, 0)):
     try:
-        # Parse the race time with AM/PM
         race_time = datetime.strptime(race_time_str, "%I:%M:%S %p")
-        race_datetime = start_time.replace(hour=race_time.hour, minute=race_time.minute, second=race_time.second)
         
-        # Add 12 hours for PM times
-        if 'PM' in race_time_str and race_time.hour != 12:
-            race_datetime += timedelta(hours=12)
+        if race_time.hour < 6: #6 am
+            hours = race_time.hour + 12 + (race_time.minute / 60) + (race_time.second / 3600)
+        elif race_time.hour >= 6:
+            hours = (race_time.hour - 6) + (race_time.minute / 60) + (race_time.second / 3600)
         
-        # Handle times before 6 AM (consider them as next day)
-        if race_datetime.hour < 6:
-            race_datetime += timedelta(days=1)
-        
-        # Calculate duration from 6 AM start
-        duration = race_datetime - start_time
-        
-        # Convert to decimal hours
-        hours = duration.total_seconds() / 3600
         return hours
     except ValueError:
+        print(f"Error processing time: {race_time_str}")
         return 0
-    
-# TODO - just subtract 6 from the time, and then parse AM or PM and add it to the leg sum time hopefully that works for the column
-# Then how to add this time to the right team in the main page?
-
-
-
 
 def sum_leg_times():
     gc = gspread.service_account()
@@ -44,16 +27,13 @@ def sum_leg_times():
         f_to_r_values = sheet.range(f'F{row}:R{row}')
         e_col_value = sheet.acell(f'E{row}').value
         
-        # Convert F-R times to decimal hours
         values = [cell.value for cell in f_to_r_values]
         times = [time_to_decimal_hours(val) for val in values]
         
-        # Add leg duration from column E
         if e_col_value:
             leg_duration = calculate_leg_duration(e_col_value)
             times.append(leg_duration)
         
-        # Sum times
         decimal_sum = sum(times)
         
         # Convert back to time format
