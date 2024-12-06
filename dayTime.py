@@ -1,7 +1,6 @@
 import gspread
 from datetime import datetime, timedelta
-
-# Calculate Act time from the individual day worksheet
+import time
 
 def calculate_leg_duration(race_time_str, start_time=datetime(2024, 1, 1, 6, 0)):
     try:
@@ -19,12 +18,11 @@ def calculate_leg_duration(race_time_str, start_time=datetime(2024, 1, 1, 6, 0))
 
 def sum_leg_times():
     gc = gspread.service_account()
-    sheet = gc.open("Relay Data").worksheet("Sheet2")
+    sheet = gc.open("Relay Data").worksheet("Day1")
     
-    # Process rows 3 to 52
+    # row 3 to 52
     for row in range(3, 53):
-        # Get values from F to R and E for current row
-        f_to_r_values = sheet.range(f'F{row}:R{row}')
+        f_to_r_values = sheet.range(f'F{row}:R{row}') # f to r in row
         e_col_value = sheet.acell(f'E{row}').value
         
         values = [cell.value for cell in f_to_r_values]
@@ -36,14 +34,14 @@ def sum_leg_times():
         
         decimal_sum = sum(times)
         
-        # Convert back to time format
         hours = int(decimal_sum)
         minutes = int((decimal_sum * 60) % 60)
         seconds = int((decimal_sum * 3600) % 60)
         time_str = f"{hours}:{minutes:02d}:{seconds:02d}"
         
-        # Update column U
+        # column U
         sheet.update_cell(row, 21, time_str)
+        time.sleep(1.5)
 
 def time_to_decimal_hours(time_str):
     if not time_str or time_str.strip() == '':
@@ -59,4 +57,4 @@ def time_to_decimal_hours(time_str):
         return 0
 
 sum_leg_times()
-print("Times summed and updated in column U")
+print("Times updated column U")

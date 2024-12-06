@@ -15,7 +15,6 @@ def connect_to_sheets():
     }
 
 def calculate_leg_time(start_time, end_time):
-    """Calculate time difference between start and end times"""
     try:
         start = datetime.strptime(start_time, "%H:%M:%S")
         end = datetime.strptime(end_time, "%H:%M:%S")
@@ -24,12 +23,11 @@ def calculate_leg_time(start_time, end_time):
             end += timedelta(days=1)
         
         duration = end - start
-        return duration.total_seconds() / 3600  # Return hours
+        return duration.total_seconds() / 3600 
     except ValueError:
         return 0  # Return 0 for invalid time formats
 
 def calculate_handicap(team_data):
-    """Calculate team handicap based on age and gender composition"""
     ages = [int(age.strip()) for age in team_data['ages'].split(',') if age.strip().isdigit()]
     females = sum(1 for gender in team_data['gender'].split(',') if gender.strip().lower() == 'f')
     
@@ -41,20 +39,17 @@ def calculate_handicap(team_data):
     
     handicap = 1.0
     
-    # Adjust handicap based on age brackets
     if avg_age > 50:
         handicap *= 0.90
     elif avg_age > 40:
         handicap *= 0.95
     
-    # Adjust handicap based on gender composition
     if gender_ratio >= 0.5:
         handicap *= 0.98
     
     return round(handicap, 3)
 
 def calculate_day_totals(worksheet, start_row=6, end_row=18, time_col='A'):
-    """Calculate total time for a day's legs"""
     total_times = {}
     records = worksheet.get_all_records()
     
@@ -79,7 +74,6 @@ def calculate_day_totals(worksheet, start_row=6, end_row=18, time_col='A'):
     return total_times
 
 def update_main_sheet(worksheets, team_data):
-    """Update main sheet with daily totals and overall results"""
     main_sheet = worksheets['main']
     
     # Calculate daily totals
@@ -125,7 +119,6 @@ def update_main_sheet(worksheets, team_data):
         main_sheet.append_row(row_data)
 
 def main():
-    """Main function to process relay data"""
     try:
         # Connect to sheets
         worksheets = connect_to_sheets()
@@ -136,7 +129,7 @@ def main():
         # Update main sheet with calculations
         update_main_sheet(worksheets, team_data)
         
-        print("Relay data processed successfully!")
+        print("Relay data done")
         
     except Exception as e:
         print(f"Error processing relay data: {str(e)}")

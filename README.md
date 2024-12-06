@@ -6,6 +6,28 @@ Actual Time, Pace
 Handicap Time Pace
 Penalties
 
+# Problems
+
+- rate limit
+- not sure if accounting for team times over 24 hours works
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # TODO
 
