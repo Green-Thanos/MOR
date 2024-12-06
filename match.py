@@ -40,7 +40,7 @@ def match_team_times():
             total_attempts += 1
             
             if team_id in main_sheet_dict:
-                main_row_index = main_sheet_dict[team_id][0]  
+                main_row_index = main_sheet_dict[team_id][0] # why are the times offset by 1 row  
                 batch_updates.append({
                     'range': f'G{main_row_index}',
                     'values': [[total_time]]
