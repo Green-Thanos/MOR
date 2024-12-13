@@ -1,5 +1,4 @@
 import gspread
-# import time
 import logging
 
 # Configure logging
@@ -14,7 +13,7 @@ def match_team_times():
     main_sheet = spreadsheet.worksheet("Open")
     
     times_data = times_sheet.get_all_values()[2:52]  
-    main_sheet_data = main_sheet.get_all_values()
+    main_sheet_data = main_sheet.get_all_values()[1:]  # Skip header row
     
     matches_found = 0
     total_attempts = 0
@@ -23,10 +22,10 @@ def match_team_times():
     
     batch_updates = []
     
-    for row_index, row in enumerate(times_data, start=4):
+    for row_index, row in enumerate(times_data, start=3):  # Start at row 3 to match G3
         try:
             if len(row) < 22:
-                logger.warning(f"insuf columns row {row_index}")
+                logger.warning(f"Insufficient columns in row {row_index}")
                 continue
             
             team_id = row[21].strip()  # Column V
@@ -40,9 +39,8 @@ def match_team_times():
             total_attempts += 1
             
             if team_id in main_sheet_dict:
-                main_row_index = main_sheet_dict[team_id][0] # why are the times offset by 1 row  
                 batch_updates.append({
-                    'range': f'G{main_row_index}',
+                    'range': f'G{row_index}',  # Use the same row index from the loop
                     'values': [[total_time]]
                 })
                 matches_found += 1
@@ -50,7 +48,7 @@ def match_team_times():
                 logger.warning(f"No match found for team ID {team_id} in row {row_index}")
         
         except Exception as row_error:
-            logger.error(f"Error row {row_index}: {row_error}")
+            logger.error(f"Error in row {row_index}: {row_error}")
     
     if batch_updates:
         try:
