@@ -11,7 +11,15 @@ Penalties
 - rate limit
 - not sure if accounting for team times over 24 hours works
 
+# Steps
 
+Make sure the all the time columns on all the sheets are formatted to time duration
+grab credential file from google api
+the script will not edit the original time sheet (the ones with the google form times)
+race numbers should be unique to each team (its like id, if you put the same id in both the mix/open division it will get confused and assign the last one to show to all the teams with the same id)
+Google form should have id
+
++ cli usage
 
 
 

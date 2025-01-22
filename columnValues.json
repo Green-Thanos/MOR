@@ -1,0 +1,39 @@
+{
+    "teamName": "c",
+    "_comment": "teamNam-lowercase letter",
+    "actMatchLetter": "E",
+    "timesheet": {
+        "raceNumber": 2,
+        "timeElapsed": 3,
+        "_comment": "Number corresponds to column value. 2 corresponds to c, 3 to d, etc.",
+        "concurrentStartTime": "E",
+        "legBegin": "F",
+        "legEnd": "R"
+    },
+    "Day1": {
+        "act": "E",
+        "actpace": "F",
+        "hc": "G" ,
+        "hcpace": "H"
+    },
+    "Day2": {
+        "act": "K",
+        "actpace": "L",
+        "hc": "M" ,
+        "hcpace": "N",
+        "tact": "O",
+        "tactpace": "P",
+        "thc": "Q",
+        "thcpace": "R"
+    },
+    "Day3": {
+        "act": "U",
+        "actpace": "V",
+        "hc": "W" ,
+        "hcpace": "X",
+        "tact": "Y",
+        "tactpace": "Z",
+        "thc": "AA",
+        "thcpace": "AB"
+    }
+}

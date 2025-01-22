@@ -5,11 +5,23 @@ spreadsheet = gc.open("Relay Data")
 times_sheet = spreadsheet.worksheet("Day1")  
 worksheet = spreadsheet.worksheet("Open")
 
-formulaList = [
-    [2, 3]
-]
+# AUTOPOPULATE IS VERY RATE LIMITED 
 
-for row in range(3, 48): # 2 to 10
-    formula = f'=G{row}/95.3'
-    worksheet.update_cell(row, 8, formula)
+def actpace():
+    for row in range(3, 47): # 2 to 10
+        formula = f'=E{row}/95.3'
+        worksheet.update_cell(row, 6, formula)
 # worksheet.copy_formula(f'C{row}', base_formula)
+
+def hctime():
+    for row in range(3, 47): # 2 to 10
+        formula = f'=E{row} * D{row}'
+        worksheet.update_cell(row, 7, formula)
+
+
+def hcpace():
+    for row in range(3, 47): # 2 to 10
+        formula = f'=E{row}/95.3 * D{row}'
+        worksheet.update_cell(row, 8, formula)
+
+hcpace()

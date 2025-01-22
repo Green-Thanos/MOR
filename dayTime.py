@@ -16,9 +16,9 @@ def calculate_leg_duration(race_time_str, start_time=datetime(2024, 1, 1, 6, 0))
         print(f"Error processing time: {race_time_str}")
         return 0
 
-def sum_leg_times():
+def sum_leg_times(sheet):
     gc = gspread.service_account()
-    sheet = gc.open("Relay Data").worksheet("Day1")
+    sheet = gc.open("Relay Data").worksheet(sheet)
     
     # row 3 to 52
     for row in range(3, 53):
@@ -39,9 +39,9 @@ def sum_leg_times():
         seconds = int((decimal_sum * 3600) % 60)
         time_str = f"{hours}:{minutes:02d}:{seconds:02d}"
         
-        # column U
-        sheet.update_cell(row, 21, time_str)
-        time.sleep(1.5)
+        # column D
+        sheet.update_cell(row, 4, time_str)
+        time.sleep(1.5) # rate limit (can change to one request for better scaling)
 
 def time_to_decimal_hours(time_str):
     if not time_str or time_str.strip() == '':
@@ -56,5 +56,5 @@ def time_to_decimal_hours(time_str):
     except:
         return 0
 
-sum_leg_times()
+sum_leg_times("Day1")
 print("Times updated column U")

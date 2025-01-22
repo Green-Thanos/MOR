@@ -7,6 +7,11 @@ def get_google_sheet():
     gc = gspread.service_account()
     return gc.open("Relay Data").worksheet("Open")
 
+# Switch to periodically saving the times so that gspread doesn't ratelimit 
+
+team = ord('c') - 97
+time = ord('e') - 97
+
 @app.route("/")
 def leaderboard():
     sheet = get_google_sheet()
@@ -15,10 +20,11 @@ def leaderboard():
     
     leaderboard_data = []
     for row in all_values:
-        if len(row) >= 7 and row[2].strip() and row[6].strip():
+        if len(row) >= 7 and row[team].strip() and row[time].strip():
+            print(row)
             leaderboard_data.append({
-                "team": row[2],  # Column C
-                "time": row[6]   # Column G
+                "team": row[team], 
+                "time": row[time]  
             })
         else:
             break

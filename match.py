@@ -5,12 +5,12 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def match_team_times():
+def match_team_times(times, main_sheet, act_column):
     gc = gspread.service_account()
     spreadsheet = gc.open("Relay Data")
     
-    times_sheet = spreadsheet.worksheet("Day1")  
-    main_sheet = spreadsheet.worksheet("Open")
+    times_sheet = spreadsheet.worksheet(times)  
+    main_sheet = spreadsheet.worksheet(main_sheet)
     
     times_data = times_sheet.get_all_values()[2:52]  
     main_sheet_data = main_sheet.get_all_values()[1:]  # Skip header row
@@ -24,14 +24,13 @@ def match_team_times():
     
     for row_index, row in enumerate(times_data, start=3):  # Start at row 3 to match G3
         try:
-            if len(row) < 22:
+            if len(row) < 17:
                 logger.warning(f"Insufficient columns in row {row_index}")
                 continue
             
-            team_id = row[21].strip()  # Column V
-            total_time = row[20].strip()  # Column U
+            team_id = row[2].strip()  # Column C
+            total_time = row[3].strip()  # Column D
             
-            # Skip empty team IDs
             if not team_id:
                 logger.warning(f"Empty team ID in row {row_index}")
                 continue
@@ -40,7 +39,7 @@ def match_team_times():
             
             if team_id in main_sheet_dict:
                 batch_updates.append({
-                    'range': f'G{row_index}',  # Use the same row index from the loop
+                    'range': f'{act_column}{row_index}',  # Use the same row index from the loop
                     'values': [[total_time]]
                 })
                 matches_found += 1
@@ -60,4 +59,5 @@ def match_team_times():
     logger.info(f"Matches found: {matches_found}")
     print(f"Matched {matches_found} out of {total_attempts} team times to main sheet")
 
-match_team_times()
+match_team_times("Day1", "Open", "E")
+match_team_times("Day2", "Mixed", "E")
