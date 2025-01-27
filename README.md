@@ -6,12 +6,13 @@
 4. `git clone Green-Thanos/MOR`
 5. `cd MOR`
 6. `pip install -r requirements.txt`
+7. Get a creds.json for your google account with the google sheets (instructions [below](#steps-to-get-a-google-sheet-service-account-from-gspread-docs))
 7. Edit any column values if you need to change the format in `app/columnValues.json`
 8. Format column values for ALL times in Open/Mixed to be "Duration"
 8. `python app/function.py` to update the leaderboard automatically
 
 
-# Steps to get a google sheet service account
+# Steps to get a google sheet service account (from gspread docs)
 
 Enable API Access for a Project
 Head to Google Developers Console and create a new project (or select the one you already have).
@@ -75,34 +76,11 @@ post credentials in .env
 render.com for python (clone git repo)
 
 
+### TODO
 
-
-
-
-
-
-# Michigan Outback Relay System
-
-3 Day results
-Start time, end time (date being recorded and clock time, not stopwatched)
-Actual Time, Pace
-Handicap Time Pace
-Penalties
-
-# Problems
-
-- rate limit
-- not sure if accounting for team times over 24 hours works
-
-# Steps
-
-Make sure the all the time columns on all the sheets are formatted to time duration
-grab credential file from google api
-the script will not edit the original time sheet (the ones with the google form times)
-race numbers should be unique to each team (its like id, if you put the same id in both the mix/open division it will get confused and assign the last one to show to all the teams with the same id)
-Google form should have id
-
-+ cli usage
+- Hosting Web Server
+- Automation Refreshing
+- Compiling into app/adding settings to app ui
 
 
 
@@ -120,21 +98,3 @@ Google form should have id
 
 
 
-# TODO
-
-## Issue:
-- google api rate limit fix (add a delay?)
-```
-APIError: [429]: Quota exceeded for quota metric 'Read requests' and limit 'Read requests per minute per user' of service 'sheets.googleapis.com' for consumer 'project_number:1091241016890'.
-```
-https://www.reddit.com/r/learnpython/comments/1bfsqb2/best_way_to_import_a_python_file_into_your_main/
-
-main.py spreadsheet api depreciated
-
-
-Questions:
-
-Which parts need automation - I'm assuming moving times to the main sheet for ACT time, then everything else can be autopopulated and the dates removed
-
-Moving parts:
-- The formulas for the different stats, a proper display maybe, penalties, which division, handicap formula
