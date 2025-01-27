@@ -1,0 +1,97 @@
+<!-- templates/public_leaderboard.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Relay Leaderboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.5/cdn.min.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-100">
+    <div x-data="leaderboard()" class="container mx-auto px-4 py-8">
+        <!-- Toggle for Light/Dark Mode -->
+        <button 
+            @click="toggleTheme()" 
+            class="mb-4 bg-gray-200 dark:bg-gray-800 text-black dark:text-white px-4 py-2 rounded">
+            Toggle Theme
+        </button>
+
+        <!-- Division Tabs -->
+        <div class="flex space-x-4 mb-4">
+            <button 
+                @click="setDivision('Open')" 
+                :class="{'bg-gray-300 dark:bg-gray-700': division === 'Open'}" 
+                class="px-4 py-2 rounded">
+                Open Division
+            </button>
+            <button 
+                @click="setDivision('Mixed')" 
+                :class="{'bg-gray-300 dark:bg-gray-700': division === 'Mixed'}" 
+                class="px-4 py-2 rounded">
+                Mixed Division
+            </button>
+        </div>
+
+        <!-- Leaderboard Table -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h1 class="text-2xl font-bold">Relay Leaderboard</h1>
+                <p class="text-sm mt-1">
+                    Last updated: <span x-text="formatDate(lastUpdated)"></span>
+                </p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3">Position</th>
+                            <th class="px-6 py-3">Team</th>
+                            <th class="px-6 py-3">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="(team, index) in teams" :key="index">
+                            <tr :class="index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'">
+                                <td class="px-6 py-4" x-text="index + 1"></td>
+                                <td class="px-6 py-4" x-text="team.team"></td>
+                                <td class="px-6 py-4" x-text="team.time"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function leaderboard() {
+            return {
+                teams: [],
+                lastUpdated: null,
+                division: 'Open',
+                async fetchData() {
+                    const response = await fetch(`/api/leaderboard?division=${this.division}`);
+                    const data = await response.json();
+                    this.teams = data.data;
+                    this.lastUpdated = data.lastUpdated;
+                },
+                setDivision(division) {
+                    if (this.division !== division) {
+                        this.division = division;
+                        this.fetchData();
+                    }
+                },
+                toggleTheme() {
+                    document.documentElement.classList.toggle('dark');
+                },
+                formatDate(dateString) {
+                    return dateString ? new Date(dateString).toLocaleString() : 'N/A';
+                },
+                init() {
+                    this.fetchData();
+                }
+            };
+        }
+    </script>
+</body>
+</html>

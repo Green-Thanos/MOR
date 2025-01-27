@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <style>
+        :root {
+            --bg-primary: #f4f4f4;
+            --bg-secondary: white;
+            --text-primary: #333;
+            --border-color: #ddd;
+            --table-header: #f8f8f8;
+            --table-stripe: #f9f9f9;
+            --button-bg: #e0e0e0;
+            --button-hover: #d0d0d0;
+        }
+
+        .dark-mode {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --text-primary: #e0e0e0;
+            --border-color: #333;
+            --table-header: #2c2c2c;
+            --table-stripe: #252525;
+            --button-bg: #2c2c2c;
+            --button-hover: #3c3c3c;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: var(--text-primary);
+        }
+        .dark-mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background: var(--table-header);
+        }
+        tr:nth-child(even) {
+            background: var(--table-stripe);
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+        .sort-toggle {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background: var(--button-bg);
+            color: var(--text-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .sort-toggle:hover {
+            background: var(--button-hover);
+        }
+        .sort-toggle.active {
+            background: var(--button-hover);
+        }
+    </style>
+</head>
+<body>
+    <button class="dark-mode-toggle" aria-label="Toggle dark mode">
+        🌓
+    </button>
+    <div class="container">
+        <h1>MOR Leaderboard</h1>
+        <div class="controls">
+            <button class="sort-toggle active" data-sort="asc">Fastest First</button>
+            <button class="sort-toggle" data-sort="desc">Slowest First</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Team Name</th>
+                    <th>Total Time</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboardBody">
+                {% for entry in leaderboard %}
+                <tr>
+                    <td>{{ entry.team }}</td>
+                    <td>{{ entry.time }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const darkModeToggle = document.querySelector('.dark-mode-toggle');
+        const body = document.body;
+        const sortButtons = document.querySelectorAll('.sort-toggle');
+        const leaderboardBody = document.getElementById('leaderboardBody');
+
+        // Dark mode functionality
+        let darkMode = localStorage.getItem('darkMode');
+
+        const enableDarkMode = () => {
+            body.classList.add('dark-mode');
+            localStorage.setItem('darkMode', 'enabled');
+        }
+
+        const disableDarkMode = () => {
+            body.classList.remove('dark-mode');
+            localStorage.setItem('darkMode', null);
+        }
+
+        if (darkMode === 'enabled') {
+            enableDarkMode();
+        }
+
+        darkModeToggle.addEventListener('click', () => {
+            darkMode = localStorage.getItem('darkMode');
+            if (darkMode !== 'enabled') {
+                enableDarkMode();
+            } else {
+                disableDarkMode();
+            }
+        });
+
+        // Sorting functionality
+        function getLeaderboardData() {
+            const rows = Array.from(leaderboardBody.getElementsByTagName('tr'));
+            return rows.map(row => ({
+                element: row,
+                team: row.cells[0].textContent,
+                time: row.cells[1].textContent
+            }));
+        }
+
+        function sortLeaderboard(direction) {
+            const data = getLeaderboardData();
+            
+            data.sort((a, b) => {
+                if (direction === 'asc') {
+                    return a.time.localeCompare(b.time);
+                } else {
+                    return b.time.localeCompare(a.time);
+                }
+            });
+
+            // Clear and repopulate the table
+            while (leaderboardBody.firstChild) {
+                leaderboardBody.removeChild(leaderboardBody.firstChild);
+            }
+
+            data.forEach(item => {
+                leaderboardBody.appendChild(item.element);
+            });
+        }
+
+        // Sort button click handlers
+        sortButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active button styling
+                sortButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                // Sort the leaderboard
+                sortLeaderboard(button.dataset.sort);
+            });
+        });
+    </script>
+</body>
+</html>
